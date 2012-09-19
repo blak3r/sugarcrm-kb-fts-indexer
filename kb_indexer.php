@@ -1,16 +1,17 @@
 <?php
 /**
- * KB FTS Indexer
+ * Knowledgebase Full Text Search Indexer
  *
  * The KB Module in Sugar 6.5 is still a "legacy" module and therefore the kb contents is currently not indexable
  * out of the box.  This script will index all the contents into the "Description" field which allows
  * 
  * @author Blake Robertson, http://www.blakerobertson.com
  * @copyright Copyright (C) 2002-2005 Free Software Foundation, Inc. http://www.fsf.org/
- * @license http://www.gnu.org/licenses/gpl.html GNU General Public License
+ * @license GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  * @version 1.0 9/18/2012
  *
- * 
+ * See: http://www.github.com/blak3r/sugarcrm-kb-fts-indexer
+ *
  * INSTRUCTIONS:
  *   1) Make sure the KB module is enabled for FTS, then make sure the description field and name fields are enabled.
  *   2) Put this script somewhere (i put it in /custom)
@@ -23,37 +24,25 @@
  *
  *  Improvements:
  *  - Figure out how to do curl in PHP code so that we don't need to do shell_exec
- *  - Figure out how to get the elastic index id from sugarconfig.
- *  - Create a logic hoook to index each document on save
+ *  - Create a logic hook to index each document on save
  *  - Refactor out mysql calls to use the sugar db object.
- *  - Respect team id's and owner id (currently hardcoding to 1 == global.."
  */
  
 
 //if(!defined('sugarEntry') || !sugarEntry) die('Not A Valid Entry Point');
-
 //require_once('include/utils.php');
 //require_once('include/export_utils.php');
-
 //global $sugar_config;
 //global $locale;
 //global $current_user;
-
-// what are these for?? 
-//chdir("../");
-//chdir("../");
-//chdir("../");
-//chdir("../");
-
 //require_once('include/entryPoint.php');
 
 
 	// CONSTANTS 
 
-    $CONFIG_FILE_PATH = "c:/sugarcrm/htdocs/sugarcrm/config.php"; // Path if you put in the /custom folder
-    $TEMP_FILE = "c:/temp_kb.txt"; //just set this to a file that can be written to.  Elastic Search rest api is pretty picky.  Had trouble getting it working when passed to curl -d
-    $ELASTIC_IP = "127.0.0.1";
-    $ELASTIC_PORT = "9200";
+    $CONFIG_FILE_PATH = "../config.php"; // Path if you put in the /custom folder
+    $TEMP_FILE = sys_get_temp_dir() . "/temp_kb.txt"; //just set this to a file that can be written to.  Elastic Search rest api is pretty picky.  Had trouble getting it working when passed to curl -d
+
 
 	if(is_file($CONFIG_FILE_PATH))
 	{
@@ -62,21 +51,28 @@
 		$db_password	= $sugar_config['dbconfig']['db_password'];
 		$db_name		= $sugar_config['dbconfig']['db_name'];
 		$db_host_name	= $sugar_config['dbconfig']['db_host_name'];
-        $INDEX_ID = $sugar_config['unique_key'];
+        $elastic_index_id = $sugar_config['unique_key'];
+        $elastic_host =  $sugar_config['Elastic']['host'];
+        $elastic_port = $sugar_config['Elastic']['port'];
 	}
 	else
 	{
+        // Fill out these values if you want to manually set these instead of loading from sugar config.php.
+        // Set $CONFIG_FILE_PATH to ""
+        print "<h3>Unable to find config.php, loading hardcoded settings in script.<h3>";
 		$db_user_name	= 'root';
 		$db_password	= 'your_password';
 		$db_name		= 'sugarcrm';
 		$db_host_name	= 'localhost';
-        $INDEX_ID = "YOUR-index-id";
+        $elastic_index_id = "YOUR-index-id";
+        $elastic_host = "127.0.0.1";
+        $elastic_port = "9200";
 	}
 
 	//--------------[ DO NOT MODIFY ANYTHING BELOW THIS LINE ]------------------//
 		
-	// Useful if you extend this class to use soap or to invoke a logic hook... You'll have to remove duplicate methods from bottom.
-	//define('sugarEntry', TRUE); 
+	// Useful if you extend this class to use soap or to invoke from a logic hook...
+    //define('sugarEntry', TRUE);
 	//chdir('../');
 	//require_once('./include/entryPoint.php');
 	//$GLOBALS['log'] =& LoggerManager::getLogger('SugarCRM');
@@ -117,12 +113,11 @@ ALLTAGGED;
         $kbbody =  htmlentities( $row['kbdocument_body']);
         print "<P><B>Indexing: " . $row['kbdocument_name'] . "</b><BR>";
         $post_data =<<<END
-        {"index":{"_index":"$INDEX_ID","_type":"KBDocuments","_id":"{$row['id']}"}}
+        {"index":{"_index":"$elastic_index_id","_type":"KBDocuments","_id":"{$row['id']}"}}
 END;
-        /*
-        {"kbdocument_name":"@@@NAME@@@","module":"KBDocuments","description":"@@@DESCRIPTION@@@","team_set_id":"{$row['team_set_id']}","doc_owner":"{$row['assigned_user_id']}"}
-END;
-*/
+
+        // Consider removing any html using class like: http://code.google.com/p/iaml/source/browse/trunk/org.openiaml.model.runtime/src/include/html2text/html2text.php
+        // This would reduce the amount of data to have to index...
         $indexArr = array();
         $indexArr['kbdocument_name'] = $kbdocument_name;
         $indexArr['module'] = "KBDocuments";
@@ -130,62 +125,25 @@ END;
         $indexArr['team_set_id'] = $row['team_set_id'];
         $indexArr["doc_owner"]=    $row['assigned_user_id'];
 
-        /*
-        $search = ARRAY ("'<script[^>]*?>.*?</script>'si",  // Strip out javascript
-            "'<[/!]*?[^<>]*?>'si",          // Strip out HTML tags
-            "'([rn])[s]+'",                // Strip out white space
-            "'&(quot|#34);'i",                // Replace HTML entities
-            "'&(amp|#38);'i",
-            "'&(lt|#60);'i",
-            "'&(gt|#62);'i",
-            "'&(nbsp|#160);'i",
-            "'&(iexcl|#161);'i",
-            "'&(cent|#162);'i",
-            "'&(pound|#163);'i",
-            "'&(copy|#169);'i",
-            "'&#(d+);'e");                    // evaluate as php
-
-        $replace = ARRAY ("",
-            "",
-            "",
-            "",
-            "",
-            "",
-            "",
-            " ",
-            " ",
-            " ",
-            " ",
-            " ",
-            " ",);
-
-        $text = preg_replace($search, $replace, $row['kbdocument_body']);
-
-
-
-        $text = "blah blahb lbah";
-
-        $post_data = str_replace( array("@@@INDEX_ID@@@","@@@ID@@@", "@@@NAME@@@","@@@DESCRIPTION@@@"),
-                    array($INDEX_ID, $row['id'], htmlentities($row['kbdocument_name']), $text ),
-                    $post_data);
-*/
-
         $post_data .= "\r\n" . json_encode($indexArr) . "\r\n";
-
 
         // Hack: see Improvements at top of file.
         file_put_contents($TEMP_FILE,$post_data);
 
-        $bulkIndexUrl = "http://$ELASTIC_IP:$ELASTIC_PORT/_bulk";
+        $bulkIndexUrl = "http://$elastic_host:$elastic_port/_bulk";
 
         $cmd = "curl -XPUT $bulkIndexUrl --data-binary @$TEMP_FILE";
-        $response  = shell_exec($cmd); // TODO should be replaced with PHP cURL
+        $response  = shell_exec($cmd); // TODO should be replaced with PHP cURL for OnDemand users
 
-        echo "<P><b>SHELL: </b>$cmd<BR><b>POST DATA:<BR></B>$post_data<BR><b>RESPONSE:</b>$response<BR<BR>";
+        echo "<P><b>SHELL: </b>$cmd<BR><b>RESPONSE:</b>$response<BR<BR>";
+        //echo "<b>POST DATA:<BR></B>$post_data<BR>";
 
 
 
         /*
+        My Initial attempt to get php cURL support working were unsuccessful... so I just went with calling shell curl
+        Someone with experience with cURL could probably get it working pretty easily.
+
 
         $bulkIndexUrl = "http://127.0.0.1:9200/_bulk";
         $ch = curl_init();
@@ -216,7 +174,7 @@ function mysql_query_wrapper( $query ) {
 	$temp = mysql_query( $query );
 	if( $temp == NULL ) {
 		$msg = "MYSQL ERROR: " . mysql_error() . "\nQUERY: $query\n";
-		print_wrapper( $msg );
+		print $msg . "<BR>";
 	}
 	return $temp;
 }
