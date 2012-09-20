@@ -18,17 +18,15 @@ update the index or can be run manually.
   
 ### Instructions
 
-    1) Make sure the KB module is enabled for FTS, then make sure the description field and name fields are enabled.
-    2) Put this script somewhere (i put it in /custom)
-    3) Edit script parameters at the top.
-    4) Create a sugar scheduler to call this script nightly to update the index.  If you put it in custom, the url would be
-       http://<your_hostname>/custom/kb_indexer.php
+ 1. Make sure the KB module is enabled for FTS, then make sure the description field and name fields are enabled.
+ 2. Download the kb_indexer.php script and place it in your /custom directory
+ 3. Edit script parameters at the top (if neccessary).
+ 4. Create a sugar scheduler to call this script nightly to update the index.  If you put it in custom, the url would be: http://<your_hostname>/custom/kb_indexer.php
  
 ### Limitations
 
-Keep in mind that this script is intended to be a temporary workaround until KB indexing support is built in to sugar.
-Here are some suggestions of ways it could be improved but didn't seem worth the time/effort.  If you're a developer and you make any of these changes, please
-submit a pull request so we can all benefit.
+Keep in mind that this script is intended to be a stop gap solution until KB indexing support is built in to sugar.
+Here are some suggestions of ways it could be improved but didn't seem worth the time/effort to me since it works for my needs.  If you're a developer and you make any of these changes, please submit a pull request so we can all benefit.
 
  1. Any new or modified KB Articles will be unavailable for searching until this script is run again.  A potential solution
  to this would be to create an on save logic hook.   When you save a KB article sugar will push the article to elastic search, but
@@ -37,6 +35,6 @@ submit a pull request so we can all benefit.
  2. If you run sugar on a windows box, you will need to have something like cygwin or git installed so you have a curl binary on your path.
  3. Refactor out mysql calls and use the Sugar $GLOBAL->db object instead.  This way MSSQL users could also use this script.
 
- #### Other Improvement Ideas
+#### Other Improvement Ideas
 
  * Create an GET Param option ?fast which would only fetch records from the database that were updated in the last say hour and only index those.  Then, you could call this script much more frequently without worrying about performance issues.
