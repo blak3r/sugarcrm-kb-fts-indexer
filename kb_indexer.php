@@ -17,15 +17,6 @@
  *   2) Put this script somewhere (i put it in /custom)
  *   3) Edit script parameters at the top... put path to your sugarconfig.
  *   4) Create a sugar scheduler to call this script nightly to update the index.
- *
- * LIMITATIONS:
- *   - Until a after save logic hook is created, when you save a KB article sugar will update the index record with a blank
- *     description.  So, any KB articles which are modified will not be searchable until this script is rerun.
- *
- *  Improvements:
- *  - Figure out how to do curl in PHP code so that we don't need to do shell_exec
- *  - Create a logic hook to index each document on save
- *  - Refactor out mysql calls to use the sugar db object.
  */
  
 
