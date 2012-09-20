@@ -1,6 +1,6 @@
 ### SugarCRM v6.5 Knowledge Base Full Text Search Indexer
 
-In Sugar 6.5, the KB module is still a __legacy__ module.  As a result, the KB article contents aren't indexable.
+In Sugar 6.5, the KB module is still a *legacy* module.  As a result, the KB article contents aren't indexable.
 The contents of the articles are stored in a different database table and don't appear as a field you can select in studio.
 This script is intended to be stop gap solution to allow users to perform full text searches against the KB Articles
 until KB module indexing is built in to sugar.
