@@ -43,8 +43,8 @@
 		$db_name		= $sugar_config['dbconfig']['db_name'];
 		$db_host_name	= $sugar_config['dbconfig']['db_host_name'];
         $elastic_index_id = $sugar_config['unique_key'];
-        $elastic_host =  $sugar_config['Elastic']['host'];
-        $elastic_port = $sugar_config['Elastic']['port'];
+        $elastic_host =  $sugar_config['full_text_search']['Elastic']['host'];
+        $elastic_port = $sugar_config['full_text_search']['Elastic']['port'];
 	}
 	else
 	{
@@ -61,6 +61,8 @@
 	}
 
 	//--------------[ DO NOT MODIFY ANYTHING BELOW THIS LINE ]------------------//
+		
+	ini_set('max_execution_time', 900); //300 seconds = 5 minutes
 		
 	// Useful if you extend this class to use soap or to invoke from a logic hook...
     //define('sugarEntry', TRUE);
@@ -100,7 +102,7 @@ ALLTAGGED;
 
     while($row = mysql_fetch_array($articles))
     {
-        $kbdocument_name = htmlentities($row['kbdocument_name']);
+        $kbdocument_name = htmlentities($row['kbdocument_name']); // TODO: Remove UTF-8 encoded images.
         $kbbody =  htmlentities( $row['kbdocument_body']);
         print "<P><B>Indexing: " . $row['kbdocument_name'] . "</b><BR>";
         $post_data =<<<END

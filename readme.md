@@ -38,7 +38,7 @@ Here are some suggestions of ways it could be improved but didn't seem worth the
 #### Other Improvement Ideas
 
  * Create an GET Param option ?fast which would only fetch records from the database that were updated in the last say hour and only index those.  Then, you could call this script much more frequently without worrying about performance issues.
- 
+ * Need to remove the base64 encoded images and other HTML elements in general as it adds unneccessary stuff to index.
 
 ### Other Sugar Projects By Blake Robertson
 
