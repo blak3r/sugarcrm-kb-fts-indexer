@@ -43,8 +43,8 @@
 		$db_name		= $sugar_config['dbconfig']['db_name'];
 		$db_host_name	= $sugar_config['dbconfig']['db_host_name'];
         $elastic_index_id = $sugar_config['unique_key'];
-        $elastic_host =  $sugar_config['full_text_search']['Elastic']['host'];
-        $elastic_port = $sugar_config['full_text_search']['Elastic']['port'];
+        $elastic_host =  $sugar_config['full_text_engine']['Elastic']['host'];
+        $elastic_port = $sugar_config['full_text_engine']['Elastic']['port'];
 	}
 	else
 	{
