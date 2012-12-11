@@ -46,3 +46,5 @@ Here are some suggestions of ways it could be improved but didn't seem worth the
  * [YAAI](http://www.sugarforge.org/projects/yaai) - Full Featured OS Asterisk Integration [(fork it here)](http://www.github.com/blak3r/yaai) - June 2012 POTM
  * [Email To Sugar](www.sugarforge.org/projects/email-to-sugar) - Archive emails in any mail client by adding a BCC line.  
  * [Task Dashlets Plus](http://www.sugarforge.org/projects/taskdashletplus/)- Adds custom dashlets for: tasks assigned to me by others, delegated tasks, overdue tasks, and open tasks past start date
+
+![gitimg](https://gitimg.com/blak3r/sugarcrm-kb-fts-indexer/README.md/track)
